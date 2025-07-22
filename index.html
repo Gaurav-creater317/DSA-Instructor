@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Instructor AI</title>
+    <style>
+        /* --- Google Font --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap');
+
+        /* --- Global Styles --- */
+        :root {
+            --sidebar-width: 260px;
+            --topnav-height: 70px;
+            --primary-accent: #8e2de2;
+            --secondary-accent: #4a00e0;
+            --background-color: rgba(23, 18, 56, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-primary: #f0f0f0;
+            --text-secondary: #a9a9b3;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background-color: #0c0a1f; color: var(--text-primary); overflow: hidden; }
+        #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .page-wrapper { display: flex; }
+        .hidden { display: none !important; }
+
+        /* --- Sidebar & Top Nav --- */
+        #sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh; background: rgba(10, 5, 30, 0.6); backdrop-filter: blur(15px); border-right: 1px solid var(--border-color); padding-top: var(--topnav-height); transition: transform 0.3s ease-in-out; z-index: 1000; display: flex; flex-direction: column; }
+        .sidebar-links { list-style: none; padding: 20px 0; margin-top: 15px; } 
+        .nav-link { display: flex; align-items: center; padding: 15px 25px; margin: 5px 15px; color: var(--text-secondary); text-decoration: none; font-weight: 500; border-radius: 10px; position: relative; overflow: hidden; transition: all 0.3s ease; cursor: pointer; }
+        .nav-link:hover { background-color: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+        .nav-link.active { background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent)); color: #fff; box-shadow: 0 0 20px rgba(142, 45, 226, 0.5); }
+        .nav-link .nav-icon { margin-right: 20px; transition: transform 0.3s ease; }
+        .nav-link:hover .nav-icon { transform: scale(1.1); }
+        .nav-link.active .nav-icon { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        #top-nav { position: fixed; top: 0; left: 0; width: 100%; height: var(--topnav-height); background: rgba(10, 5, 30, 0.6); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; z-index: 1001; }
+        .logo { font-size: 1.6rem; font-weight: 700; color: #fff; text-decoration: none; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        .menu-toggle { display: none; background: none; border: none; color: white; font-size: 2rem; cursor: pointer; }
+
+        /* --- Main Content Area --- */
+        #main-content { flex-grow: 1; margin-left: var(--sidebar-width); padding-top: var(--topnav-height); height: 100vh; display: flex; justify-content: center; align-items: center; transition: margin-left 0.3s ease-in-out; }
+
+        /* --- View Containers --- */
+        .view-container { width: 95%; height: calc(100% - 40px); max-width: 900px; background: var(--background-color); border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); overflow-y: auto; }
+        .view-content { padding: 25px; }
+        .view-content h2 { font-size: 2rem; color: #fff; padding-bottom: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        #chat-view { padding: 0; display: flex; flex-direction: column; }
+        .chat-header { background: linear-gradient(to right, var(--primary-accent), var(--secondary-accent)); color: white; padding: 20px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2); flex-shrink: 0; border-radius: 20px 20px 0 0; }
+        .chat-header h1 { font-size: 1.5rem; }
+        .chat-window { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        .chat-window::-webkit-scrollbar { width: 8px; } .chat-window::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); } .chat-window::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+        .message { margin-bottom: 15px; max-width: 80%; display: flex; flex-direction: column; position: relative; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message-content { padding: 12px 18px; border-radius: 18px; color: white; line-height: 1.5; word-wrap: break-word; }
+        .user-message { align-self: flex-end; align-items: flex-end; } .user-message .message-content { background: var(--secondary-accent); border-bottom-right-radius: 4px; }
+        .bot-message { align-self: flex-start; align-items: flex-start; } .bot-message .message-content { background: var(--primary-accent); border-bottom-left-radius: 4px; }
+        .bot-message pre { background-color: #1a1a2e; color: #d4d4d4; font-family: 'Fira Code', monospace; padding: 15px; border-radius: 8px; overflow-x: auto; margin-top: 10px; font-size: 0.9rem; white-space: pre-wrap; border: 1px solid rgba(255, 255, 255, 0.1); }
+        .bot-message code { font-family: 'Fira Code', monospace; background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; }
+        .loading-indicator { display: flex; align-items: center; gap: 5px; } .loading-indicator span { height: 8px; width: 8px; background: #fff; border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease-in-out both; } .loading-indicator .bounce1 { animation-delay: -0.32s; } .loading-indicator .bounce2 { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+        .chat-input-form { display: flex; padding: 15px; background: rgba(0, 0, 0, 0.2); border-top: 1px solid var(--border-color); flex-shrink: 0; border-radius: 0 0 20px 20px; }
+        #userInput { flex-grow: 1; padding: 12px 15px; border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 25px; font-size: 1rem; outline: none; transition: all 0.3s; background-color: transparent; color: white; }
+        #userInput::placeholder { color: var(--text-secondary); } #userInput:focus { border-color: var(--primary-accent); background-color: rgba(0, 0, 0, 0.1); }
+        #sendButton { background: linear-gradient(to right, var(--primary-accent), var(--secondary-accent)); color: white; border: none; padding: 0 25px; margin-left: 10px; border-radius: 25px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s; }
+        #sendButton:hover { filter: brightness(1.2); transform: scale(1.05); } #sendButton:disabled { cursor: not-allowed; background: #555; transform: scale(1); filter: brightness(1); }
+
+        /* --- Dashboard & History Styling --- */
+        #history-list { list-style: none; padding: 0; }
+        .history-item { background: rgba(255, 255, 255, 0.05); border-radius: 10px; margin-bottom: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.3s; }
+        .history-item:hover { background: rgba(255, 255, 255, 0.1); }
+        .history-title { font-weight: 500; cursor: pointer; flex-grow: 1; }
+        .history-actions button { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; margin-left: 10px; transition: color 0.3s; }
+        .history-actions button:hover { color: #fff; }
+        #dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-card { background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; text-align: center; border: 1px solid var(--border-color);}
+        .stat-card .value { font-size: 2.5rem; font-weight: 700; color: var(--primary-accent); }
+        .stat-card .label { font-size: 1rem; color: var(--text-secondary); }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 900px) { #sidebar { transform: translateX(-100%); } #sidebar.open { transform: translateX(0); } #main-content { margin-left: 0; } .menu-toggle { display: block; } }
+    </style>
+</head>
+<body>
+
+    <canvas id="starfield"></canvas>
+    
+    <div class="page-wrapper">
+        <nav id="top-nav">
+            <a href="#" class="logo">DSA Galaxy</a>
+            <button class="menu-toggle" id="menu-toggle-btn">☰</button>
+        </nav>
+
+        <aside id="sidebar">
+            <ul class="sidebar-links">
+                <li><a class="nav-link" id="new-chat-btn">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Chat
+                </a></li>
+                <li><a class="nav-link" id="history-btn">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                    History
+                </a></li>
+                <li><a class="nav-link" id="dashboard-btn">
+                     <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20v-4M18 20v-8"/></svg>
+                    Dashboard
+                </a></li>
+            </ul>
+        </aside>
+
+        <main id="main-content">
+            <div class="view-container" id="chat-view">
+                <header class="chat-header"><h1>AI Instructor</h1></header>
+                <main class="chat-window" id="chatWindow"></main>
+                <footer class="chat-input-form">
+                    <input type="text" id="userInput" placeholder="Ask about Data Structures & Algorithms...">
+                    <button id="sendButton">Send</button>
+                </footer>
+            </div>
+            <div class="view-container hidden" id="dashboard-view">
+                <div class="view-content">
+                    <h2>Dashboard</h2>
+                    <div id="dashboard-stats"></div>
+                </div>
+            </div>
+            <div class="view-container hidden" id="history-view">
+                 <div class="view-content">
+                    <h2>Chat History</h2>
+                    <ul id="history-list"></ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        // =================================================================================
+        // SECTION 1: IMMERSIVE STARFIELD ANIMATION LOGIC
+        // =================================================================================
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        window.addEventListener('mousemove', (event) => { mouse.x = event.clientX; mouse.y = event.clientY; });
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+        function createStars(count, radius, velocity) { const stars = []; for (let i = 0; i < count; i++) { stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: Math.random() * radius + 0.5, vx: (Math.random() - 0.5) * velocity, vy: (Math.random() - 0.5) * velocity, alpha: Math.random() * 0.5 + 0.5, twinkleSpeed: Math.random() * 0.02 }); } return stars; }
+        const shootingStars = []; function createShootingStar() { shootingStars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, len: Math.random() * 80 + 10, angle: Math.random() * Math.PI * 2, speed: Math.random() * 10 + 5, opacity: 1, }); }
+        const backStars = createStars(300, 1.2, 0.1); const midStars = createStars(100, 1.8, 0.25); const frontStars = createStars(30, 2.5, 0.4);
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); const parallaxX = (mouse.x - canvas.width / 2) / 500; const parallaxY = (mouse.y - canvas.height / 2) / 500;
+            [{ stars: backStars, factor: 0.5 }, { stars: midStars, factor: 1 }, { stars: frontStars, factor: 1.5 }].forEach(layer => {
+                layer.stars.forEach(star => { star.alpha += star.twinkleSpeed; if (star.alpha > 1) { star.alpha = 1; star.twinkleSpeed *= -1; } if (star.alpha < 0.5) { star.alpha = 0.5; star.twinkleSpeed *= -1; } star.x += star.vx + (parallaxX * layer.factor); star.y += star.vy + (parallaxY * layer.factor); if (star.x < 0) star.x = canvas.width; if (star.x > canvas.width) star.x = 0; if (star.y < 0) star.y = canvas.height; if (star.y > canvas.height) star.y = 0; ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2); ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`; ctx.fill(); });
+            });
+            shootingStars.forEach((star, index) => { star.x += Math.cos(star.angle) * star.speed; star.y += Math.sin(star.angle) * star.speed; star.opacity -= 0.02; ctx.beginPath(); const tailX = star.x - Math.cos(star.angle) * star.len; const tailY = star.y - Math.sin(star.angle) * star.len; const gradient = ctx.createLinearGradient(star.x, star.y, tailX, tailY); gradient.addColorStop(0, `rgba(255, 255, 255, ${star.opacity})`); gradient.addColorStop(1, `rgba(255, 255, 255, 0)`); ctx.strokeStyle = gradient; ctx.lineWidth = 2; ctx.moveTo(tailX, tailY); ctx.lineTo(star.x, star.y); ctx.stroke(); if (star.opacity <= 0) { shootingStars.splice(index, 1); } });
+            requestAnimationFrame(animate);
+        }
+        setInterval(createShootingStar, 3000); animate();
+
+        // =================================================================================
+        // SECTION 2: UI & LocalStorage Logic (NO API CALLS)
+        // =================================================================================
+        const menuToggleBtn = document.getElementById('menu-toggle-btn'), sidebar = document.getElementById('sidebar');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const chatView = document.getElementById('chat-view'), dashboardView = document.getElementById('dashboard-view'), historyView = document.getElementById('history-view'), views = [chatView, dashboardView, historyView];
+        function switchView(viewToShowId) { views.forEach(view => view.classList.add('hidden')); document.getElementById(viewToShowId).classList.remove('hidden'); navLinks.forEach(link => { link.classList.remove('active'); if (link.id === viewToShowId.replace('-view', '-btn')) { link.classList.add('active'); } }); closeSidebarOnMobile(); }
+        menuToggleBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+        function closeSidebarOnMobile() { if (window.innerWidth <= 900) { sidebar.classList.remove('open'); } }
+        const HISTORY_STORAGE_KEY = 'dsaChatHistory'; let currentChatLog = [];
+        function getHistory() { return JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY)) || []; }
+        function saveHistory(history) { localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history)); }
+        function saveCurrentChat() { if (currentChatLog.length <= 1) return; const history = getHistory(); const firstUserMessage = currentChatLog.find(m => m.sender === 'user'); const chatTitle = firstUserMessage ? firstUserMessage.text.substring(0, 40) + '...' : 'Untitled Chat'; history.unshift({ id: Date.now(), title: chatTitle, log: currentChatLog }); saveHistory(history); }
+        function renderHistoryList() { const history = getHistory(), historyList = document.getElementById('history-list'); historyList.innerHTML = ''; if (history.length === 0) { historyList.innerHTML = '<p>No saved chats found.</p>'; return; } history.forEach(chat => { const item = document.createElement('li'); item.className = 'history-item'; item.innerHTML = `<span class="history-title">${chat.title}</span><div class="history-actions"><button class="delete-btn" title="Delete Chat">🗑️</button></div>`; item.querySelector('.history-title').addEventListener('click', () => loadChatFromHistory(chat.id)); item.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); deleteChatFromHistory(chat.id); }); historyList.appendChild(item); }); }
+        function loadChatFromHistory(chatId) { const history = getHistory(), chat = history.find(c => c.id === chatId); if (!chat) return; saveCurrentChat(); chatWindow.innerHTML = ''; currentChatLog = chat.log; currentChatLog.forEach(message => displayMessage(message.text, message.sender, false)); switchView('chat-view'); }
+        function deleteChatFromHistory(chatId) { let history = getHistory(); history = history.filter(c => c.id !== chatId); saveHistory(history); renderHistoryList(); renderDashboard(); }
+        function renderDashboard() { const history = getHistory(), statsContainer = document.getElementById('dashboard-stats'); let totalMessages = 0, userMessages = 0, botMessages = 0; history.forEach(chat => { totalMessages += chat.log.length; chat.log.forEach(msg => { if (msg.sender === 'user') userMessages++; else botMessages++; }); }); statsContainer.innerHTML = `<div class="stat-card"><div class="value">${history.length}</div><div class="label">Saved Conversations</div></div><div class="stat-card"><div class="value">${totalMessages}</div><div class="label">Total Messages</div></div><div class="stat-card"><div class="value">${userMessages}</div><div class="label">Your Messages</div></div><div class="stat-card"><div class="value">${botMessages}</div><div class="label">AI Responses</div></div>`; }
+
+        // =================================================================================
+        // SECTION 3: GEMINI CHAT APPLICATION LOGIC (FRONTEND API CALL)
+        // =================================================================================
+        
+        // This line imports the necessary Google AI SDK for the browser.
+        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+        // !!! --- CRITICAL SECURITY WARNING --- !!!
+        // DO NOT DEPLOY THIS CODE TO A PUBLIC WEBSITE WITH YOUR REAL API KEY.
+        // Your API key will be visible to everyone who visits your site.
+        // This method is for LOCAL TESTING ONLY.
+        // const API_KEY = "AIzaSyAm-VB8yEX-n15zNQa-5kCOpdm_h1WVs8g"; 
+        
+
+        const ai = new GoogleGenerativeAI(API_KEY);
+        const model = ai.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            systemInstruction: 'You are a Data Structure and Algorithm instructor. You will only reply to the problem related to Data structure and Algorithm. You have to solve the query of the user in the simplest way possible, using markdown for formatting. If a user asks any question which is not related to Data Structure and Algorithm, reply to them rudely.You can reply anything rudely in a similar manner. Else, reply politely with a simple explanation.',
+        });
+
+        const chatWindow = document.getElementById("chatWindow"), userInput = document.getElementById("userInput"), sendButton = document.getElementById("sendButton");
+        function startNewChat() { saveCurrentChat(); chatWindow.innerHTML = ''; currentChatLog = []; const welcomeMessage = "Welcome! Ask me anything about Data Structures and Algorithms."; displayMessage(welcomeMessage, 'bot'); switchView('chat-view'); }
+        async function handleUserQuery() {
+            const userQuery = userInput.value.trim();
+            if (!userQuery || sendButton.disabled) return;
+            toggleForm(false);
+            displayMessage(userQuery, 'user');
+            userInput.value = '';
+            const loadingElement = displayLoadingIndicator();
+            try {
+                // This now calls Google's API directly from the browser.
+                const result = await model.generateContent(userQuery);
+                const response = await result.response;
+                const text = response.text();
+                loadingElement.remove();
+                displayMessage(text, 'bot');
+            } catch (error) {
+                loadingElement.remove();
+                displayMessage("Oops! Something went wrong. Check the browser console and ensure your API key is correct and valid.", 'bot');
+                console.error("Gemini API Error:", error);
+            } finally {
+                toggleForm(true);
+            }
+        }
+        function toggleForm(isEnabled) { userInput.disabled = !isEnabled; sendButton.disabled = !isEnabled; if (isEnabled) { userInput.focus(); } }
+        function displayMessage(text, sender, isNew = true) { if (isNew) { currentChatLog.push({ sender, text }); } const messageDiv = document.createElement('div'); messageDiv.className = `message ${sender}-message`; const contentDiv = document.createElement('div'); contentDiv.className = 'message-content'; let htmlContent = text.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => { const escapedCode = code.replace(/</g, "<").replace(/>/g, ">"); return `<pre><code>${escapedCode}</code></pre>`; }); htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/`(.*?)`/g, '<code>$1</code>').replace(/\n/g, '<br>'); htmlContent = htmlContent.replace(/<pre><br>/g, '<pre>').replace(/<br><\/pre>/g, '</pre>'); contentDiv.innerHTML = htmlContent; messageDiv.appendChild(contentDiv); chatWindow.appendChild(messageDiv); chatWindow.scrollTop = chatWindow.scrollHeight; }
+        function displayLoadingIndicator() { const loadingDiv = document.createElement('div'); loadingDiv.className = 'message bot-message'; const contentDiv = document.createElement('div'); contentDiv.className = 'message-content'; contentDiv.innerHTML = `<div class="loading-indicator"><span class="bounce1"></span><span class="bounce2"></span><span class="bounce3"></span></div>`; loadingDiv.appendChild(contentDiv); chatWindow.appendChild(loadingDiv); chatWindow.scrollTop = chatWindow.scrollHeight; return loadingDiv; }
+        
+        // --- Event Listeners and Initial State ---
+        document.getElementById('new-chat-btn').addEventListener('click', (e) => { e.preventDefault(); startNewChat(); });
+        document.getElementById('history-btn').addEventListener('click', (e) => { e.preventDefault(); renderHistoryList(); switchView('history-view'); });
+        document.getElementById('dashboard-btn').addEventListener('click', (e) => { e.preventDefault(); renderDashboard(); switchView('dashboard-view'); });
+        sendButton.addEventListener('click', handleUserQuery);
+        userInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); handleUserQuery(); } });
+        
+        startNewChat();
+    </script>
+</body>
+</html>
