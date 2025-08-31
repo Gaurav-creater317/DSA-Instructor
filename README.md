@@ -21,4 +21,4 @@ If related to DSA → Give a proper explanation.
 
 If not related to DSA → Respond rudely (but in a humorous way).
 
-✨ Feel free to fork and star this repository if you like it !
+# ✨ Feel free to fork and star this repository if you like it !
